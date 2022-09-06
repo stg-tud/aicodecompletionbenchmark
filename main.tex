@@ -1,0 +1,56 @@
+
+\documentclass[sigplan,screen,10pt]{acmart}
+\settopmatter{printfolios=true,printccs=false,printacmref=false}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern-0.8em\TeX}}}
+
+\setcopyright{none}
+
+\usepackage{alltt}
+\usepackage{svg}
+
+\title{Artificial Datasets mimicking real world Completions}
+\author{Milan Binz}
+\date{September 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Motivation}
+Today most studies on Code Completion use artificialy created datasets such as Py150K to train and evaluate their models.
+Such datasets are created by mining large amounts of Code from Github, in training random places in the code are selected and all following code is hidden from the model which is then tasked with either predicting the next word or a sequence of the next words.
+This is done due to the assumption that these datasets are good analogs for the completions required by real programers.
+Findings from Hellendorf et. al.\cite{8812116}, which were corroborated by Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542}, show that this assumption does not hold, both finding large drops in accuracies when training on artificial datasets compared to as compared to data collected from real programmers, when tested on real world data. 
+Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} additionally documented developers using tools developed with artificial datasets less often compared to those trained on real world data.
+
+This begs the question, why researchers continue to use these artificial datasets, instead of real world data?
+A possible reason might be the lack of large publicly available datasets of real world completions.
+While the dataset used by Hellendorf et. al.\cite{8812116} was made public it is sourced from only 66 developers due to its small size its usefullness as a training set is very low meaning that its mostly only useful as a verification set.
+The much larger dataset used by Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} wich contains more than three million completions collected from facebook developers over a time span of several months was not made public.
+This shows some big problems with the creation of a large corpus of real world completions.
+To create such a dataset one first needs access to hundreds if not thousands of programmers over a long time and when an institution has collected all of these completions the likelihood that these completions contain code not meant to be publicly available, as well as industry secrets is quite high which would make the publication of such a dataset impossible.
+If one considers the fact that some tools such as github copilot where created with much larger datasets than many other current models\cite{2107.03374}, meaning that in order for a dataset large enough to be used by such a model to be created one would need even more programmers and more time to observe their completions making such the cration of such a dataset not a viable approach.
+
+While the creation of a larger publicly available dataset of real world completions is desirable, instead I propose the creation of an artificial dataset more simmiliar to real world data.
+For one this means that the access to so many programmers is no longer required and once an approach to create such a dataset has been shown to be effective this would make the creation of other comparable datasets more easy allowing for more programming languages to be covered or for creating larger datasets as needed while still minimizing concept drift.
+
+\section{Idea}
+Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} explored how big the impact of differences between code which is still in production and code which has been finished, gone through qualitiy control and been published hypothesizing that these differences might account for some of the concept-drift.
+The fact that they did not find noticeable performance differences points to the selection of completion instances being the main difference maker.
+This means one could use a publicly available dataset such as Py150k as a starting point and instead of selecting completion instances randomly control the selection more closely.
+I propose to select the completion instances in such a way that the distribution of various token types, such as method invocations, variables, etc, matches the distributions reported by aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} and hellendoorn et. al\cite{8812116} as closely as possible.
+Furthermore one can also see if matching the length of to be completed tokens also reduces concept drift.
+
+The efficacy of such a dataset can be shown by using the dataset of hellendoorn et. al. as a validation set and comparing the accuracies of a model trained on the dataset used as a starting point and a model trained on the created dataset.
+
+
+%References
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}
