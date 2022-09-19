@@ -44,7 +44,9 @@ Furthermore Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} also doc
 
 This begs the question, why researchers continue to use these synthetic datasets, instead of real world data?
 One possible reason might be the lack of large publicly available datasets of real world completions.
+
 While the dataset used by Hellendoorn et. al.\cite{8812116} was made public, it is sourced from only 86 developers and contains C\# Code a relatively niche language when it comes to Code Completion.
+
 Due to its small size, its usefulness as a training set is very low, meaning that its mostly only useful as a verification set.
 The much larger dataset used by Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542}, which contains more than three million completions collected from Facebook developers over a time span of several months, was not made public.
 
@@ -55,6 +57,7 @@ If one considers the fact that some tools such as github copilot were created wi
 
 While the creation of a larger publicly available dataset of real world completions is desirable, instead I propose the creation of an synthetic dataset more simmiliar to real world data.
 This means that the access to so many programmers is no longer required. Once an approach to create such a dataset has been shown to be effective, this would make the creation of other comparable datasets easier, allowing for more programming languages to be covered, and for creating larger datasets as needed while still minimizing concept drift.
+
 
 
 \section{Proposal}
@@ -85,12 +88,11 @@ If the created datasets work as theorized, the models trained on them should per
 Another possibility is to ask Aye et al. whether they would be willing and capable to assist in the evaluation step and run the same procedure as described before on their dataset, creating results for the Python versions as well, without them having to release their data.
 
 
-
-
 \begin{figure}
     \centering
     \includegraphics[scale = 0.1]{token-distribution.png}
     \caption{Token distributions as reported by Hellendoorn et. al.\cite{8812116}}
+
     \label{fig:distributions}
 \end{figure}
 
