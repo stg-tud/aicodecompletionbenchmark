@@ -1,0 +1,11 @@
+identifier :  19506  occurences making up  0.131% of all tokens
+alias :  297392  occurences making up  2.004% of all tokens
+NameLoad :  6101251  occurences making up  41.118 % of all tokens
+attr :  3016628  occurences making up  20.33% of all tokens
+NameStore :  1258041  occurences making up  8.478% of all tokens
+Str :  2374528  occurences making up  16.003% of all tokens
+NameParam :  797621  occurences making up  5.375% of all tokens
+Num :  931045  occurences making up  6.2745% of all tokens
+vararg :  16964  occurences making up  0.114% of all tokens
+kwarg :  23664  occurences making up  0.159% of all tokens
+NameDel :  1581  occurences making up  0.011% of all tokens
