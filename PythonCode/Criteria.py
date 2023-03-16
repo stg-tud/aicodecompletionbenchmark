@@ -20,11 +20,11 @@ class SimpleGaussian:
         length = len(selected)
 
         for i, s in enumerate(selected):
-            if "value" not in s:
-                print("token ", i, " doesnt have a value")
-                print("token is:")
-                print(s)
-                quit()
+            # if "value" not in s:
+            #     print("token ", i, " doesnt have a value")
+            #     print("token is:")
+            #     print(s)
+            #     quit()
             lengths[len(s["value"])] += 1
         for i in range(cutoff):
             if lengths[i] != 0:
@@ -32,25 +32,37 @@ class SimpleGaussian:
             assert lengths[i] < 1
         self.found = lengths
 
-    def get_score(self, tokens):
+    def get_score(self, tokens, filetype):
         scores = []
         for t in tokens:
-            # print(t)
-            if "value" in t:
-                length = len(t["value"])
-                if length >= cutoff:
-                    scores.append(-1.0)
-                    continue
-                if self.backup[length] < 0:
-                    self.backup[length] = self.calc(length)
-                assert self.backup[length] >= 0
-                assert self.found[length] < 1
-                assert self.backup[length] - self.found[length] > -1
-                scores.append(self.backup[length] - self.found[length])
-            else:
-                scores.append(-1.0)
+            #print(t)
+            length = 0
+            if filetype == "json":
+                if "value" in t:
+                    length = len(t["value"])
+                else:
+                    scores.append(0.0)
+            elif filetype == "cs":
+                length = len(t)
 
+            if length >= cutoff:
+                scores.append(0.0)
+                continue
+            if self.backup[length] < 0:
+                self.backup[length] = self.calc(length)
+            assert self.backup[length] >= 0
+            assert self.found[length] < 1
+            assert self.backup[length] - self.found[length] > -1
+            res =   self.backup[length] - self.found[length]
+            res += 0.5
+            if res > 1:
+                res = 1
+            elif res < 0:
+                res = 0
+            scores.append(res)
         return scores
+
+
 
 
 class PrioLater:
