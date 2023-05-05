@@ -38,10 +38,11 @@ class SimpleGaussian:
             #print(t)
             length = 0
             if filetype == "json":
-                if "value" in t:
+                if "value" in t and t["type"] == "IdentifierToken":
                     length = len(t["value"])
                 else:
                     scores.append(0.0)
+                    continue
             elif filetype == "cs":
                 length = len(t)
 
@@ -53,7 +54,7 @@ class SimpleGaussian:
             assert self.backup[length] >= 0
             assert self.found[length] < 1
             assert self.backup[length] - self.found[length] > -1
-            res =   self.backup[length] - self.found[length]
+            res = self.backup[length] - self.found[length]
             res += 0.5
             if res > 1:
                 res = 1

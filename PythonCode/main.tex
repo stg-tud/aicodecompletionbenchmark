@@ -1,0 +1,107 @@
+
+\documentclass[sigplan,screen,9pt]{acmart}
+\settopmatter{printfolios=true,printccs=false,printacmref=false}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    \normalfont B\kern-0.5em{\scshape i\kern-0.25em b}\kern0.8em\TeX}}}
+
+\setcopyright{none}
+
+\usepackage{alltt}
+\usepackage{svg}
+
+\title{Synthetic Datasets Mimicking Real World Completions}
+\author{Milan W. M. Binz}
+\date{September 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Motivation}
+Today most studies on Code Completion use synthetic datasets, such as Py150K, to train and evaluate their models.
+Such datasets are created by mining large amounts of code from Github, or other code repositories; They are not specifically created for code completion models but for other adjacent Code related tasks.
+In training, random tokens in the code are selected, then all the code following the selected tokens is hidden from the model. The model is tasked with either predicting the next token or a sequence of subsequent tokens.
+This is done due to the assumption that these datasets are good analogs for the completions required by real programmers.
+Findings from Hellendoorn et. al.\cite{8812116}, which were corroborated by Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542}, show that this assumption does not hold.
+Both found a significant drop in accuracy when testing models trained on synthetic datasets on datasets consisting of completions real developers had used. 
+See Figure \ref{fig:accuracies}.
+
+Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} additionally found that a model trained on real world performance outperforms a model trained on synthetic data. 
+Furthermore Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542} also documented that developers use tools developed with synthetic datasets less often than those trained on real world data.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[scale = 0.33]{accuracies.png}
+    \caption{Accuracies as reported by Aye et. al.
+    \cite{https://doi.org/10.48550/arxiv.2011.04542}}
+    \label{fig:accuracies}
+\end{figure}
+
+This begs the question, why researchers continue to use these synthetic datasets, instead of real world data?
+One possible reason might be the lack of large publicly available datasets of real world completions.
+
+While the dataset used by Hellendoorn et. al.\cite{8812116} was made public, it is sourced from only 86 developers and contains C\# Code a relatively niche language when it comes to Code Completion.
+
+Due to its small size, its usefulness as a training set is very low, meaning that its mostly only useful as a verification set.
+The much larger dataset used by Aye et. al.\cite{https://doi.org/10.48550/arxiv.2011.04542}, which contains more than three million completions collected from Facebook developers over a time span of several months, was not made public.
+
+This shows the difficulties involved with creating a large corpus of real world completions.
+To create such a dataset one first needs access to hundreds if not thousands of programmers over a long time. When a company collects the completions, the likelihood that these completions contain code not meant to be publicly available, or industry secrets, is quite high, which would make publication of such a dataset impossible.
+
+If one considers the fact that some tools such as github copilot were created with much larger datasets than many other current models\cite{2107.03374}, we see that, in order to create a dataset large enough to be used by such a model, one would need even more programmers and more time to observe their completions, making the creation of such a dataset not a viable approach.
+
+While the creation of a larger publicly available dataset of real world completions is desirable, instead I propose the creation of an synthetic dataset more simmiliar to real world data.
+This means that the access to so many programmers is no longer required. Once an approach to create such a dataset has been shown to be effective, this would make the creation of other comparable datasets easier, allowing for more programming languages to be covered, and for creating larger datasets as needed while still minimizing concept drift.
+
+
+
+\section{Proposal}
+
+Of the differences Hellendoorn et al. documented between completion instances randomly chosen from synthetic data sets and those real programmers require, three appear interesting and could be accounted for in the selection process:
+\begin{enumerate}
+    \item {\bf Token type distribution}
+     Real code completions favor 
+     method-invocations to a much larger degree than artificial ones. Additionally, variable and class names are significantly over-represented in artificial completions, both appearing more than twice as much as they do in real completions (see Figure \ref{fig:distributions}).
+     Controlling  the selection of completion instances so that the distribution of token types closely matches that of real data should yield data more closely resembling real world completions.
+    \item {\bf Token Length}
+    Artificial completions are, with an average length of 9.06 characters, noticeably shorter than real ones, which are on average 9.87 characters long.
+    Controlling  the selection of completion instances so that the token lengths are closer to the ones in real World completions should also yield data more closely resembling real world completions.
+    \item {\bf Token Placement}
+    In their paper proposing the CodeFill model, Izadi et. al. \cite{Izadi_2022} also proposed their approach to improve artificial completions Cardinal Point Prediction.
+    Their approach works by restricting completions to only occur after specific tokens such as dots or opening brackets. This approach can also be included in this work to study both how effective it is on its own and to explore its impact when combined with the approach outlined above.
+    Izadi et al. did not test their approach against real world data.    
+\end{enumerate}
+
+In this work I would create both a dataset that already has selected completion instances as well as the selection algorithm which accounts for token types and lengths and can also implement Cardinal Point Prediction as shown by Izadi et al.
+Due to the fact that the dataset released by Hellendoorn et al.\cite{8812116} is in C\# I would also create two versions of the dataset, one in C\# to evaluate against the data from Hellendoorn et al. and one in Python as that is the most common language used in Code Completion works and the language Aye et al.\cite{https://doi.org/10.48550/arxiv.2011.04542} used.
+
+\section{Evaluation}
+Once the datasets are created and some models have been trained both on the
+new datasets
+and on a baseline dataset, the C\# versions can be evaluated against the dataset provided by Hellendoorn et al.\cite{8812116} by using that dataset as an evaluation dataset.
+If the created datasets work as theorized, the models trained on them should perform significantly better than the baseline models.
+Another possibility is to ask Aye et al. whether they would be willing and capable to assist in the evaluation step and run the same procedure as described before on their dataset, creating results for the Python versions as well, without them having to release their data.
+
+
+\begin{figure}
+    \centering
+    \includegraphics[scale = 0.1]{token-distribution.png}
+    \caption{Token distributions as reported by Hellendoorn et. al.\cite{8812116}}
+
+    \label{fig:distributions}
+\end{figure}
+
+
+
+
+
+%References
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{references}
+
+\end{document}

@@ -7,7 +7,8 @@ import time
 import os.path
 from os import path
 import chardet
-
+import multiprocessing
+from threading import Lock
 
 # from python_utils import file_tqdm
 
@@ -19,10 +20,8 @@ count = 0
 
 
 def folder(path_in, path_out, criteria, context_length = 1000, path_mid = ""):
-    #start_time = time.time()
 
     if not os.path.exists(path.join(path_out, path_mid)):
-    #     os.remove(path.join(path_out, path_mid))
         os.mkdir(path.join(path_out, path_mid))
     cutoff = 0.55
     directory = path.join(path_in, path_mid)
@@ -46,64 +45,40 @@ def folder(path_in, path_out, criteria, context_length = 1000, path_mid = ""):
 
 
 def singlefile(path_in, path_out, criteria, context_length):
-    #start_time = time.time()
     filetype = ""
-
     total_lengths = np.zeros(200)
-
     cutoff = 0.55
-    target_reduction = 0.5
-    acceptance_rate = 0.0
 
     if os.path.exists(path_out):
         os.remove(path_out)
 
-    selected = []
-    # skipped = 0
-    # skipped2 = 0
-    # skipped3 = 0
+    #selected = []
     types = [[], []]
-
-    # with open(path_in, mode='rb') as f:
-    #     binary = f.read()
-    #     code = chardet.detect(binary)['encoding']
-
-    with open(path_in, "r") as f, open(path_out, "w") as fout:
+    skipped = 0
+    with open(path_in, "r", encoding="utf-8") as f, open(path_out, "w") as fout:
         for i, line in enumerate(f):  # file_tqdm(f):
 
             if i % 1000 == 0 and i != 0:
                 print()
-                print("finished ", i, " of ", 500000, " lines")
+                print("finished ", i, " lines")
                 print()
-                #print("avg is: ", all_avg)
                 print("averaged: ", np.average(all_avg))
                 print("token_avg is: ", np.average(token_avg))
-                # print(skipped, " lines were skipped as they had less than 3 tokens")
-                # print(skipped2, "lines were skipped as no selection was possible")
-                # print(skipped3, "lines were skipped due to the best score being -1")
-                #for c in criteria:
-                #    c.update(selected)
 
-
-
-            # token_ids = []
             tokens = []
-
             dp = ""
             if path_in.endswith(".json"):
                 filetype = "json"
                 dp = json.loads(line.strip())
             elif path_in.endswith(".cs") or path_in.endswith(".txt"):
-                filetype= "cs"
+                filetype = "cs"
                 dp = line.split("\t")
 
             if len(dp) < 3:
-                # skipped += 1
+                if filetype == "json":
+                    skipped += 1
                 continue
-
-
             total_scores = score(dp, criteria, total_lengths, filetype)
-
 
             if len(total_scores) == 0:
                 print("total_scores is empty")
@@ -111,31 +86,6 @@ def singlefile(path_in, path_out, criteria, context_length):
             for tok in total_scores:
                 if tok != 0:
                     token_avg.append(tok)
-            # for j, tok in enumerate(dp):
-            #
-            #     if ("value" not in tok) or ("children" in tok):
-            #         continue
-            #
-            #     if "value" not in tok:
-            #         print("somethings going very wrong in line: ", i, " index is: ", j)
-            #         print("length of dp is: ", len(dp))
-            #         print("tok is: ", tok)
-            #         quit()
-            #     if len(tok["value"]) > np.size(total_lengths):
-            #         total_lengths = np.append(total_lengths, np.zeros(len(tok["value"]) - np.size(total_lengths) + 1))
-            #     total_lengths[len(tok["value"])] += 1
-            #
-            #     token_ids.append(j)
-            #     tokens.append(tok)
-            # if len(tokens) == 0:
-            #     skipped2 += 1
-            #     continue
-            # total_scores = np.array([])
-            # for c in criteria:
-            #     scores = np.array(c.get_score(tokens))
-            #     if total_scores.shape != scores.shape:
-            #         total_scores = np.zeros(scores.shape)
-            #     total_scores = total_scores + scores
 
             if np.max(total_scores) == -1.0:
                 for t in tokens:
@@ -145,55 +95,27 @@ def singlefile(path_in, path_out, criteria, context_length):
                         types[1].append(0)
                     types[1][types[0].index(typ)] += 1
 
-                # skipped3 += 1
-                # continue
-            #selected.append( tokens[np.argmax(total_scores)] )
-
             if len(dp) < context_length:
                 decision = shorter_decision(dp, total_scores, cutoff)
-                #print("called shorter")
             else:
                 decision = longer_decision(dp, total_scores, context_length, cutoff)
-                #print("called longer")
 
             if decision:
-                selected.append(decision)
+                #selected.append(decision)
+                if filetype == "json":
+                    print(json.dumps(decision), file=fout)
 
-        if filetype == "json":
-            print(json.dumps(selected), file=fout)
-        elif filetype == "cs":
-            for l in selected:
-                if isinstance(l, str):
-                    print("\t".join(l), file=fout)
-                    print("\n", file=fout)
-                else:
-                    for l2 in l:
-                        print("".join(l2), file=fout)
-                        print("\n", file=fout)
-
-
-        # for line in selected:
-        #     print(json.dumps(line), file=fout)
-        # selected_lengths = np.array([])
-        # for s in selected:
-        #     selected_lengths = np.append(selected_lengths, len(s["value"]))
-        #
-        # total_avg = 0
-        # total_num = 0
-        # for x in range(np.size(total_lengths) - 1):
-        #     total_avg += total_lengths[x] * x
-        #     total_num += total_lengths[x]
-        # total_avg /= total_num
-        #
-        # print()
-        # print("successfully executed program")
-        # print("it took ", time.time() - start_time, "seconds to run this program")
-        # print("selected has a length of: ", len(selected))#, " expected is a length of: ", 50000)
-        # print("all_avg is: ", np.average(all_avg))
-        # print("token_avg is: ", np.average(token_avg))
-        # print("shorter_avg is: ", np.average(shorter_avg))
-        # print("longer_avg is: ", np.average(longer_avg))
-
+        # if filetype == "json":
+        #     print(json.dumps(selected), file=fout)
+        # elif filetype == "cs":
+        #     for l in selected:
+        #         if isinstance(l, str):
+        #             print("\t".join(l), file=fout)
+        #             print("\n", file=fout)
+        #         else:
+        #             for l2 in l:
+        #                 print("".join(l2), file=fout)
+        #                 print("\n", file=fout)
 
 
         # print("average length of selected tokens is: ", np.average(selected_lengths))
@@ -217,29 +139,17 @@ def singlefile(path_in, path_out, criteria, context_length):
         # plt.plot(x, y)
         # plt.show()
 
+
 def score(line, criteria, total_lengths, filetype):
 
-    # for j, tok in enumerate(line):
-    #     token_ids = []
-    #     tokens = []
-    #     if ("value" not in tok) or ("children" in tok):
-    #         tokens.append(0)
-    #
-    #     if len(tok["value"]) > np.size(total_lengths):
-    #         total_lengths = np.append(total_lengths, np.zeros(len(tok["value"]) - np.size(total_lengths) + 1))
-    #     total_lengths[len(tok["value"])-1] += 1
-    #
-    #     token_ids.append(j)
-    #     tokens.append(tok)
-    # if len(tokens) == 0:
-    #     return []
     total_scores = np.zeros(len(line))
     for c in criteria:
         scores = np.array(c.get_score(line, filetype))
-        #print("scores are:", scores)
         total_scores += scores
-    #print("total scores are:", total_scores)
     return total_scores
+
+
+
 
 def shorter_decision(line, scores, cutoff):
     sequence_score = 0
@@ -260,8 +170,6 @@ def shorter_decision(line, scores, cutoff):
         return []
 
 def longer_decision(line, scores, context_length, cutoff):
-    # print("length of line is: ", len(line), "\t length of scores is:", len(scores))
-    # print(scores)
     sequence_score = 0
     zeroes = 0
     for i in range(context_length):
@@ -302,9 +210,6 @@ def longer_decision(line, scores, context_length, cutoff):
 def greedy_select(scores, context_length, cutoff, lbound, hbound):
     if lbound >= hbound:
         return []
-    # print("lbound is:", lbound, ", hbound is: ", hbound)
-    # print("length of scores is: ", len(scores))
-    #print("scores[lbound:hbound] is: ", scores[lbound:hbound])
     highest = lbound + np.argmax(scores[lbound:hbound])
     if highest < cutoff:
         return []
@@ -328,8 +233,8 @@ cont = 1000
 if __name__ == "__main__":
     context_length = 1000
     start_time = time.time()
-    _in_ = "Static"
-    _out_ = "output2"
+    _in_ = "C:\\Users\\milan\\Desktop\\asts.json"
+    _out_ = "outputCs"
     if path.isfile(_in_):
         crit = [Criteria.SimpleGaussian(14.31, 3)]
         singlefile(_in_, _out_, crit, context_length)
