@@ -45,6 +45,12 @@ class SimpleGaussian:
                     continue
             elif filetype == "cs":
                 length = len(t)
+            elif filetype == "txt":
+                if("<Identifier:" in t):
+                    length = len(t[12:t.find(",")])
+                else:
+                    scores.append(0.0)
+                    continue
 
             if length >= cutoff:
                 scores.append(0.0)
@@ -80,30 +86,40 @@ class PrioLater:
         return scores
 
 class TokenTypes:
-    def __init__(self, dictionary):
-        self.dict = dictionary.copy()
-        self.updated_dict = dictionary.copy()
+    def __init__(self, dictionary1, dictionary2):
+        self.dict1 = dictionary1.copy()
+        self.dict2 = dictionary2.copy()
+        self.updated_dict2 = dictionary2.copy()
 
     def update(self, selected):
-        tempdict = self.dict.copy()
+        tempdict = self.dict2.copy()
         skipped = 0
         for token in selected:
-            if token["type"] not in tempdict:
+            if token["type"] not in self.dict1:
                 skipped += 1
                 continue
             else:
-                tempdict[token["type"]] += 1
+                tempdict[self.dict1[token["type"]]] += 1
         total_tokens = len(selected) - skipped
         for val in tempdict:
             tempdict[val] = tempdict[val] / total_tokens
             tempdict[val] = self.dict[val] - tempdict[val]
-        self.updated_dict = tempdict
+        self.updated_dict2 = tempdict
 
-    def get_score(self, tokens):
+    def get_score(self, tokens, filetype):
         scores = []
         for token in tokens:
-            if token["type"] not in self.dictionary:
-                scores.append(-1)
+            type = ""
+            if filetype == "json":
+                type = token["type"]
+            elif filetype == "txt":
+                if "<Identifier:" in token:
+                    type = token[token.find(",")+1:-1]
+                else:
+                    scores.append(0.0)
+                    continue
+            if type not in self.dict1:
+                scores.append(0.0)
             else:
-                scores.append(self.updated_dict[token["type"]])
+                scores.append(self.updated_dict[self.dict1[type]])
         return scores

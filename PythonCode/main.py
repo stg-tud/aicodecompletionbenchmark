@@ -18,6 +18,28 @@ shorter_avg = []
 longer_avg = []
 count = 0
 
+testDict1 = {
+    "NamespaceSymbol" : "class",
+    "NonErrorNamedTypeSymbol" : "class",
+    "Parameternull" : "parameter",
+    "ParameterSymbol": "parameter",
+    "LocalSymbol" : "variable",
+    "MethodSymbol" : "method",
+    "FieldSymbol" : "field",
+    "MethodSymbolnull" : "method",
+    "PropertySymbolnull" : "method",
+    "PropertySymbol" : "method",
+    "TypeParameterSymbol" : "class",
+    "NonErrorNamedTypeSymbolnull" : "class",
+    "FieldSymbolnull" : "field"
+}
+testDict2 = {
+    "class" : 0.9,
+    "method" : 0.58,
+    "parameter" : 0.8,
+    "field" : 0.13,
+    "variable" : 0.12
+}
 
 def folder(path_in, path_out, criteria, context_length = 1000, path_mid = ""):
 
@@ -44,19 +66,51 @@ def folder(path_in, path_out, criteria, context_length = 1000, path_mid = ""):
 
 
 
-def singlefile(path_in, path_out, criteria, context_length):
+def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], whole_line = False):
     filetype = ""
     total_lengths = np.zeros(200)
+    target_length = outlength[0]
+    current_file = 0
     cutoff = 0.55
-
+    path_out = ""
+    if isinstance(path_outs, str):
+        path_out = path_outs
+    else:
+        path_out = path_outs[0]
+    outtype = ""
+    if path_out.endswith("txt"):
+        outtype = "txt"
+    elif path_out.endswith("json"):
+        outtype = "json"
     if os.path.exists(path_out):
         os.remove(path_out)
 
     #selected = []
     types = [[], []]
     skipped = 0
-    with open(path_in, "r", encoding="utf-8") as f, open(path_out, "w") as fout:
+    acceptance_rateL = 0.375
+    acceptance_rateH = 0.425
+    accepted_total = 0
+    accepted = 0
+    fout = open(path_out, "w")
+    with open(path_in, "r") as f:
         for i, line in enumerate(f):  # file_tqdm(f):
+
+            if target_length != -1 and accepted_total + accepted >= target_length:
+                current_file += 1
+                if current_file >= len(outlength):
+                    break
+                target_length = outlength[current_file]
+                fout.close()
+                path_out = path_outs[current_file]
+                if path_out.endswith("txt"):
+                    outtype = "txt"
+                elif path_out.endswith("json"):
+                    outtype = "json"
+                if os.path.exists(path_out):
+                    os.remove(path_out)
+                fout = open(path_out, "w")
+
 
             if i % 1000 == 0 and i != 0:
                 print()
@@ -64,15 +118,36 @@ def singlefile(path_in, path_out, criteria, context_length):
                 print()
                 print("averaged: ", np.average(all_avg))
                 print("token_avg is: ", np.average(token_avg))
+                print("cutoff is: ", cutoff)
+                print("acceptance_rate is: ", (accepted_total/i))
+                print("for last 100 it is: ", (accepted/100))
+
+            if i % 100 == 0 and i != 0:
+                accepted_total += accepted
+                high = False; low = False;
+                if not (((accepted/100) > acceptance_rateL) or ((accepted_total/i) > acceptance_rateL)):
+                    low = True
+                if not (((accepted / 100) < acceptance_rateH) or ((accepted_total / i) < acceptance_rateH)):
+                    high = True
+                if low and not high:
+                    cutoff -= 0.01
+                elif high and not low:
+                    cutoff += 0.01
+                accepted = 0
+
+
 
             tokens = []
             dp = ""
             if path_in.endswith(".json"):
                 filetype = "json"
                 dp = json.loads(line.strip())
-            elif path_in.endswith(".cs") or path_in.endswith(".txt"):
+            elif path_in.endswith(".cs"):
                 filetype = "cs"
                 dp = line.split("\t")
+            elif path_in.endswith(".txt"):
+                filetype = "txt"
+                dp = line.split(" ")
 
             if len(dp) < 3:
                 if filetype == "json":
@@ -95,16 +170,23 @@ def singlefile(path_in, path_out, criteria, context_length):
                         types[1].append(0)
                     types[1][types[0].index(typ)] += 1
 
-            if len(dp) < context_length:
+            if len(dp) < context_length or whole_line or not outtype == "txt":
                 decision = shorter_decision(dp, total_scores, cutoff)
             else:
                 decision = longer_decision(dp, total_scores, context_length, cutoff)
 
             if decision:
+                accepted += 1
                 #selected.append(decision)
                 if filetype == "json":
                     print(json.dumps(decision), file=fout)
-
+                elif filetype == "txt":
+                    if outtype == "txt":
+                        print(txtprint(decision),file=fout)
+                    else:
+                        print(jsonprint(decision, total_scores),file=fout)
+    fout.close()
+                #print(decision,file=fout)
         # if filetype == "json":
         #     print(json.dumps(selected), file=fout)
         # elif filetype == "cs":
@@ -138,6 +220,30 @@ def singlefile(path_in, path_out, criteria, context_length):
         # plt.ylabel("y axis caption")
         # plt.plot(x, y)
         # plt.show()
+
+def txtprint(content):
+    if not isinstance(content[0],str):
+        for l in content:
+            txtprint(l)
+            return
+    rem = "<Identifier:"
+    newlist = [""] * len(content)
+    for i in range(len(content)-1):
+        t = content[i]
+        if rem in t:
+            t = t[len(rem):t.find(",")]
+        newlist[i] = t
+    outString = " ".join(newlist)
+    return outString
+
+def jsonprint(content, scores):
+    pre = int(len(scores)*0.15)
+    best = np.argmax(scores[pre:]) + pre
+    inputstring = txtprint(content[:best])
+    gtstring =  txtprint(content[best:])
+    gtstring = gtstring[:gtstring.find(";")+1]
+    tmp = {"input" : inputstring, "gt" : gtstring}
+    return json.dumps(tmp)
 
 
 def score(line, criteria, total_lengths, filetype):
@@ -233,11 +339,13 @@ cont = 1000
 if __name__ == "__main__":
     context_length = 1000
     start_time = time.time()
-    _in_ = "C:\\Users\\milan\\Desktop\\asts.json"
-    _out_ = "outputCs"
+    _in_ = "D:\\large_files\\400k.txt"
+    #_out_ = "outputCs.txt"
+    _out_ = ["train.txt", "dev.txt", "dev.json" ,"test.json"]
+    _outlength_ = [95000, 5000, 5000, 45000]
     if path.isfile(_in_):
-        crit = [Criteria.SimpleGaussian(14.31, 3)]
-        singlefile(_in_, _out_, crit, context_length)
+        crit = [Criteria.SimpleGaussian(14.31, 3), Criteria.TokenTypes(testDict1, testDict2)]
+        singlefile(_in_, _out_, crit, context_length, _outlength_)
     else:
         crit = [Criteria.SimpleGaussian(14.31, 3)]
         folder(_in_, _out_, crit)
