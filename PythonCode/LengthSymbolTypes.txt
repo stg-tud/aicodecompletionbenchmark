@@ -1,0 +1,25 @@
+NamespaceSymbol :  734066  occurences making up  2.9670021421931208 % of all tokens
+null :  6684980  occurences making up  27.019845600420357 % of all tokens
+Declarationnull :  2585735  occurences making up  10.451214583080716 % of all tokens
+Parameternull :  1163069  occurences making up  4.700978133462673 % of all tokens
+NonErrorNamedTypeSymbol :  2556859  occurences making up  10.334501434865203 % of all tokens
+MethodSymbol :  1199402  occurences making up  4.847831534699487 % of all tokens
+ParameterSymbol :  2075934  occurences making up  8.390663271492665 % of all tokens
+FieldSymbol :  2284387  occurences making up  9.233203993371326 % of all tokens
+LocalSymbol :  3250121  occurences making up  13.136578958004932 % of all tokens
+MethodSymbolnull :  435782  occurences making up  1.761375853845843 % of all tokens
+PropertySymbol :  1444575  occurences making up  5.8387898629804775 % of all tokens
+LabelSymbol :  4704  occurences making up  0.019012974414938766 % of all tokens
+TypeParameterSymbol :  146536  occurences making up  0.5922800210177439 % of all tokens
+PropertySymbolnull :  44546  occurences making up  0.18004931086051496 % of all tokens
+NonErrorNamedTypeSymbolnull :  30782  occurences making up  0.12441695970251809 % of all tokens
+ParameterSymbolnull :  8219  occurences making up  0.033220160866577746 % of all tokens
+EventSymbol :  20450  occurences making up  0.08265631946970615 % of all tokens
+FieldSymbolnull :  47984  occurences making up  0.19394527302857603 % of all tokens
+NamespaceSymbolnull :  9506  occurences making up  0.038422052463522094 % of all tokens
+RangeVariableSymbol :  8159  occurences making up  0.03297764843781577 % of all tokens
+DynamicTypeSymbol :  2139  occurences making up  0.008645568085364375 % of all tokens
+EventSymbolnull :  243  occurences making up  0.000982175336485995 % of all tokens
+LocalSymbolnull :  2821  occurences making up  0.011402126025625481 % of all tokens
+TypeParameterSymbolnull :  1  occurences making up  4.0418738126995676e-06 % of all tokens
+avg token length =  9.739098540882448

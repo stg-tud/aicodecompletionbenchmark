@@ -2,6 +2,8 @@ import json
 import os
 import Criteria
 import numpy as np
+import sys
+import argparse
 from matplotlib import pyplot as plt
 import time
 import os.path
@@ -34,9 +36,9 @@ testDict1 = {
     "FieldSymbolnull" : "field"
 }
 testDict2 = {
-    "class" : 0.9,
+    "class" : 0.09,
     "method" : 0.58,
-    "parameter" : 0.8,
+    "parameter" : 0.08,
     "field" : 0.13,
     "variable" : 0.12
 }
@@ -66,13 +68,13 @@ def folder(path_in, path_out, criteria, context_length = 1000, path_mid = ""):
 
 
 
-def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], whole_line = False):
+def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], whole_line = False, keepWrapper = False):
     filetype = ""
     total_lengths = np.zeros(200)
     target_length = outlength[0]
     current_file = 0
-    cutoff = 0.55
-    path_out = ""
+    cutoff = 1.5
+
     if isinstance(path_outs, str):
         path_out = path_outs
     else:
@@ -95,12 +97,12 @@ def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], w
     fout = open(path_out, "w")
     with open(path_in, "r") as f:
         for i, line in enumerate(f):  # file_tqdm(f):
-
+            avgs = np.zeros(len(criteria))
             if target_length != -1 and accepted_total + accepted >= target_length:
                 current_file += 1
                 if current_file >= len(outlength):
                     break
-                target_length = outlength[current_file]
+                target_length += outlength[current_file]
                 fout.close()
                 path_out = path_outs[current_file]
                 if path_out.endswith("txt"):
@@ -110,6 +112,7 @@ def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], w
                 if os.path.exists(path_out):
                     os.remove(path_out)
                 fout = open(path_out, "w")
+
 
 
             if i % 1000 == 0 and i != 0:
@@ -182,9 +185,19 @@ def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], w
                     print(json.dumps(decision), file=fout)
                 elif filetype == "txt":
                     if outtype == "txt":
-                        print(txtprint(decision),file=fout)
+                        if not isinstance(decision[0], str):
+                            for l in decision:
+                                print(txtprint(l, keepWrapper),file=fout)
+                        else:
+                            print(txtprint(decision, keepWrapper),file=fout)
                     else:
-                        print(jsonprint(decision, total_scores),file=fout)
+                        print(jsonprint(decision, total_scores, keepWrapper),file=fout)
+                for c in criteria:
+                    if not isinstance(decision[0],str):
+                        for d in decision:
+                            c.update(d, filetype)
+                    else:
+                        c.update(decision, filetype)
     fout.close()
                 #print(decision,file=fout)
         # if filetype == "json":
@@ -221,37 +234,51 @@ def singlefile(path_in, path_outs, criteria, context_length, outlength = [-1], w
         # plt.plot(x, y)
         # plt.show()
 
-def txtprint(content):
-    if not isinstance(content[0],str):
-        for l in content:
-            txtprint(l)
-            return
+def txtprint(content, wrapper):
+
     rem = "<Identifier:"
     newlist = [""] * len(content)
-    for i in range(len(content)-1):
+    for i in range(len(content)):
         t = content[i]
-        if rem in t:
-            t = t[len(rem):t.find(",")]
+        if not wrapper:
+            if rem in t:
+                t = t[len(rem):t.find(",")]
         newlist[i] = t
+
+
+
     outString = " ".join(newlist)
+    outString = str.replace(outString, "\n", "")
     return outString
 
-def jsonprint(content, scores):
+def jsonprint(content, scores, wrapper):
     pre = int(len(scores)*0.15)
-    best = np.argmax(scores[pre:]) + pre
-    inputstring = txtprint(content[:best])
-    gtstring =  txtprint(content[best:])
-    gtstring = gtstring[:gtstring.find(";")+1]
+    best = np.argmax(scores[pre:]) + pre -1
+    inputstring = txtprint(content[:best],wrapper)
+    gtstring =  txtprint(content[best:],wrapper)
+    semicolon = gtstring.find(";")
+    if semicolon != -1:
+        gtstring = gtstring[:semicolon+1]
     tmp = {"input" : inputstring, "gt" : gtstring}
     return json.dumps(tmp)
 
 
 def score(line, criteria, total_lengths, filetype):
-
+    avg = 0
+    count = 0
     total_scores = np.zeros(len(line))
-    for c in criteria:
+    for i, c in enumerate(criteria):
         scores = np.array(c.get_score(line, filetype))
+        if i == 0: scores *= 2
         total_scores += scores
+        for val in scores:
+            if not val == 0:
+                avg += val
+                count+=1
+        #if count != 0: print("avg of criteria ", i, " is: ", avg/count)
+
+        avg = 0
+        count = 0
     return total_scores
 
 
@@ -283,7 +310,7 @@ def longer_decision(line, scores, context_length, cutoff):
         if scores[i] == 0:
             zeroes += 1
     assert zeroes >= 0
-    assert zeroes < context_length
+    assert zeroes <= context_length
     avg_score = sequence_score / (context_length - zeroes)
     avg_scores = [avg_score]
 
@@ -337,16 +364,39 @@ def valid_subtree(tree):
 
 cont = 1000
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-input", default=None, type=str, required=True,
+                        help="Path to the input file")
+    parser.add_argument("-output", default=None, nargs='+', type=str, required=True,
+                        help="Paths to the output files")
+    parser.add_argument("-outlength", default=None, nargs='+',type=int, required=True,
+                        help="Lengths  of the output files must have same amount of values as -output")
+    #parser.add_argument("-Criteria", default=None, required=True,
+    #                    help="The Criteria that are going to bbe used for selection")
+    parser.add_argument("--wholeLines", action='store_true', required=False,
+                        help="Whether whole Line selections are desired")
+    parser.add_argument("--keepWrapper", action='store_true',
+                        help="If <Identifier:> should not be removed")
+    args = parser.parse_args()
+
     context_length = 1000
     start_time = time.time()
-    _in_ = "D:\\large_files\\400k.txt"
+    whole_lines = args.wholeLines
+    _in_ = args.input
     #_out_ = "outputCs.txt"
-    _out_ = ["train.txt", "dev.txt", "dev.json" ,"test.json"]
-    _outlength_ = [95000, 5000, 5000, 45000]
+    _out_ = args.output
+    #_out_ = ["dev.json" ,"test.json"]
+    _outlength_ = args.outlength
+    #_outlength_ = [5000, 45000]
     if path.isfile(_in_):
-        crit = [Criteria.SimpleGaussian(14.31, 3), Criteria.TokenTypes(testDict1, testDict2)]
-        singlefile(_in_, _out_, crit, context_length, _outlength_)
+        crit = [Criteria.SimpleGaussian(9.87, 3), Criteria.TokenTypes(testDict1, testDict2)]
+
+        weigths = [1,1]
+        #crit = [Criteria.SimpleGaussian(14.31, 3)]
+        #crit = [Criteria.TokenTypes(testDict1, testDict2)]
+        singlefile(_in_, _out_, crit, context_length, _outlength_, whole_line = whole_lines, keepWrapper=args.keepWrapper)
     else:
         crit = [Criteria.SimpleGaussian(14.31, 3)]
         folder(_in_, _out_, crit)
+
     print("it took ", time.time() - start_time, "seconds to run this program")

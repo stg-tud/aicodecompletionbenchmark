@@ -7,14 +7,15 @@ import random
 
 def main():
     start_time = time.time()
-    path_in = "D:\large_files\\400k.txt"
-    path_out = "SymbolTypes.txt"
+    path_in = "train.txt"
+    path_out = "LonlySymbolTypes.txt"
     num_examples = 0
     tokentypes = {}
     tokenexamples = {}
     typename = "<Identifier:"
     symbolname = ",Symbol:"
     total_token_amount = 0
+    avg_length = 0
     with open(path_in, "r", encoding ="utf-8") as f, open(path_out, "w") as fout:
         for i, line in enumerate(f):
 
@@ -40,6 +41,8 @@ def main():
                             rand2 = random.randint(0, num_examples-1)
                             tokenexamples[token][rand2] = [name]
                 total_token_amount += 1
+                avg_length *= (total_token_amount-1)/total_token_amount
+                avg_length += len(name)/ total_token_amount
                 occurence = line.find(typename,occurence+1)
             #if i % 1000 == 0 and i != 0:
             print()
@@ -53,6 +56,7 @@ def main():
             if num_examples > 0:
                 for ind, example in enumerate(tokenexamples[key]):
                     print("\t", ind, ":", example, file=fout)
+        print("avg token length = ", avg_length, file=fout)
 
 
 if __name__ == "__main__":

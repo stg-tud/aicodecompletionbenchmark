@@ -1,0 +1,26 @@
+NamespaceSymbol :  803865  occurences making up  2.9516509972178957 % of all tokens
+null :  7290479  occurences making up  26.769357554497493 % of all tokens
+Declarationnull :  2822448  occurences making up  10.363532998445827 % of all tokens
+Parameternull :  1289160  occurences making up  4.733568944503644 % of all tokens
+NonErrorNamedTypeSymbol :  2749706  occurences making up  10.096437159169799 % of all tokens
+MethodSymbol :  1317227  occurences making up  4.8366260356059 % of all tokens
+ParameterSymbol :  2324212  occurences making up  8.534097973597307 % of all tokens
+FieldSymbol :  2542987  occurences making up  9.337401322936245 % of all tokens
+LocalSymbol :  3663289  occurences making up  13.450953368970344 % of all tokens
+MethodSymbolnull :  483859  occurences making up  1.7766452076690162 % of all tokens
+PropertySymbol :  1584531  occurences making up  5.81811934376129 % of all tokens
+LabelSymbol :  4781  occurences making up  0.017554991718384004 % of all tokens
+TypeParameterSymbol :  163719  occurences making up  0.6011473936712217 % of all tokens
+PropertySymbolnull :  48647  occurences making up  0.17862323407743708 % of all tokens
+NonErrorNamedTypeSymbolnull :  32436  occurences making up  0.1190992912314377 % of all tokens
+ParameterSymbolnull :  9136  occurences making up  0.033545786308127226 % of all tokens
+EventSymbol :  22149  occurences making up  0.08132723521658383 % of all tokens
+FieldSymbolnull :  55792  occurences making up  0.20485841831250373 % of all tokens
+NamespaceSymbolnull :  10855  occurences making up  0.039857652186374895 % of all tokens
+RangeVariableSymbol :  9469  occurences making up  0.0347685037819239 % of all tokens
+DynamicTypeSymbol :  2571  occurences making up  0.009440260135529236 % of all tokens
+EventSymbolnull :  316  occurences making up  0.001160296461620863 % of all tokens
+LocalSymbolnull :  2780  occurences making up  0.010207671402867085 % of all tokens
+DiscardSymbol :  3  occurences making up  1.1015472736906926e-05 % of all tokens
+TypeParameterSymbolnull :  2  occurences making up  7.3436484912712844e-06 % of all tokens
+avg token length =  9.54622949731404
