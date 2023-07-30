@@ -1,1 +1,1 @@
-This is still in work and not yet finished
+Github repository for the Thesis "Improving Datasets for Code Completion" by Milan William Binz
